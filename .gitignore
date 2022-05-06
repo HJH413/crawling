@@ -255,3 +255,5 @@ target/m2e-wtp/web-resources/META-INF/maven/com.javassem/basic/pom.properties
 
 #db
 db.py
+
+webdriver/chromedriver.exe
