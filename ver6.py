@@ -4,7 +4,7 @@ import db
 from selenium import webdriver
 from bs4 import BeautifulSoup
 
-
+# ver6에서 url 목록저장
 # 1. mysql db 접속해서 테이블 생성 및 테이블 존재여부 확인 후 db연결 종료
 # 2. 자동스크롤을 해서 페이지 전체를 로딩하고 크롤링을 통해서 URL 전체 주소 및 주소의 제목을 가져옴
 
