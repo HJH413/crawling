@@ -26,7 +26,7 @@ try:
             contentLinkImportDay date,
             PRIMARY KEY(contentTitle),
             UNIQUE INDEX(contentLinkNumber) 
-    );
+    )
     """
     # sql 실행 명령(테이블 생성)
     cursor.execute(sql)  # cusor 객체의 execute() 메서드를 사용하여 CRUD 문장을 데이터베이스 서버로 보냄
@@ -93,7 +93,7 @@ while True:
             cursor = conn.cursor()
             #  sql 문장만들기
             sql = """
-                        INSERT INTO contentLink (contentLink , contentLinkTitle, contentLinkImportDay)
+                        INSERT INTO contentLink (contentLink , contentTitle, contentLinkImportDay)
                         VALUE (%s, %s, now())
                         ON DUPLICATE KEY UPDATE contentLink = %s, contentLinkImportDay = now()
                     """

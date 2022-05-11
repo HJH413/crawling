@@ -4,35 +4,7 @@ import db
 from selenium import webdriver
 from bs4 import BeautifulSoup
 
-# ver9 CRUD
-
-# 드라이버 세팅
-conn = psql.connect(host=db.hostLocal, port=3306, user=db.userLocal, password=db.passwordLocal, db=db.dbLocal,
-                    charset='utf8',
-                    autocommit=True)
-# 테이블 생성
-try:
-    # cusor : 커서 생성
-    cursor = conn.cursor()
-    # sql문 작성(테이블 생성 sql문 작성)
-    sql = """ 
-        CREATE TABLE content(
-            contentNumber int AUTO_INCREMENT,
-            contentTitle varchar(250),
-            contentYear varchar(100),
-            contentImportDate date,
-            PRIMARY KEY(contentNumber),
-            UNIQUE INDEX(contentTitle) 
-    );
-    """
-    # sql 실행 명령(테이블 생성)
-    cursor.execute(sql)  # cusor 객체의 execute() 메서드를 사용하여 CRUD 문장을 데이터베이스 서버로 보냄
-    # 실행 결과 확정 선언
-    conn.commit()  # CRUD가 완료되었으면, commit()메서드를 사용하여 데이터를 commit
-    # DB연결 해제
-    conn.close()
-except Exception as e:
-    print("{} 테이블 생성되어 있음".format(e))
+# ver10 추출연습
 
 # URL 주소 리스트 생성
 contentURL = []
@@ -40,74 +12,81 @@ contentURL = []
 contentSaveList = []
 
 # 드라이버 세팅
-conn = psql.connect(host=db.hostLocal, port=3306, user=db.userLocal, password=db.passwordLocal, db=db.dbLocal,
-                    charset='utf8',
-                    autocommit=True)
-try:
-    # cursor 얻어오기
-    cursor = conn.cursor()
-    #  sql 문장만들기
-    sql = """
-               SELECT contentLink FROM contentLink
-               """
-    # sql 실행(전송)
-    cursor.execute(sql)
-    for row in cursor:
-        print('-' * 50)
-        print('{0}'.format(row[0]))
-        contentURL.append(row[0])
-    print('-' * 50)
-    # cursor 닫기
-    cursor.close()
-    # 연결 닫기
-    conn.close()  # DB 연결 종료
-    print(len(contentURL))
-except Exception as e:
-    print(e)
+# conn = psql.connect(host=db.hostLocal, port=3306, user=db.userLocal, password=db.passwordLocal, db=db.dbLocal,
+#                     charset='utf8',
+#                     autocommit=True)
+# try:
+#     # cursor 얻어오기
+#     cursor = conn.cursor()
+#     #  sql 문장만들기
+#     sql = """
+#                SELECT contentLink FROM contentLink
+#                """
+#     # sql 실행(전송)
+#     cursor.execute(sql)
+#     for row in cursor:
+#         print('-' * 50)
+#         print('{0}'.format(row[0]))
+#         contentURL.append(row[0])
+#     print('-' * 50)
+#     # cursor 닫기
+#     cursor.close()
+#     # 연결 닫기
+#     conn.close()  # DB 연결 종료
+#     print(len(contentURL))
+# except Exception as e:
+#     print(e)
 
 driver = webdriver.Chrome("./webdriver/chromedriver")  # 드라이버 불러오고 옵션값 세팅
 driver.maximize_window()  # 화면크기 최대로
 driver.implicitly_wait(3)
+driver.get('https://www.justwatch.com/kr/TV-%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%A8/was-ipeu-2021')
 
-# 페이지 이동기
-for URL in contentURL:
-    # 페이지 접근
-    driver.get(URL)
-    time.sleep(3)
-    html = driver.page_source
-    # print(html)
-    soup = BeautifulSoup(html, 'html.parser')
-    contentSave = soup.select('div.jw-info-box')  # 크롤링할 위치 정함
+time.sleep(3)
+contentImgLinkList = []
+htmlImg = driver.page_source
+soupImg = BeautifulSoup(htmlImg, 'html.parser')
+contentPosterImgLink = soupImg.select_one('div.title-poster img.picture-comp__img').attrs['src']
+contentMainImgLink = soupImg.select_one('div.swiper-slide img.picture-comp__img').attrs['src']
+contentImgLinkList.append([contentMainImgLink, contentPosterImgLink])
+print(contentImgLinkList)
 
-    try:
-        for content in contentSave:
-            contentTitle = content.select_one('div.title-block h1')  # 제목 저장-
-            print(contentTitle.text)
-            contentYear1 = content.select_one('div.title-block span.text-muted')
-            contentYear2 = contentYear1.text.replace("(", "").replace(")", "").replace(" ", "")
-            contentSaveList.append([contentTitle.text.strip(), contentYear2])
-    except Exception as e:
-        print(e)
-# 드라이버 세팅
-conn = psql.connect(host=db.hostLocal, port=3306, user=db.userLocal, password=db.passwordLocal, db=db.dbLocal,
-                    charset='utf8',
-                    autocommit=True)
-for content in contentSaveList:
-    data = (content[0], content[1])
-    listData = list(data)
-    print(listData)
-    cursor = conn.cursor()
-    #  sql 문장만들기
-    sql = """
-                    INSERT INTO content (contentTitle , contentYear, contentImportDate)
-                    VALUE (%s, %s, now())
-                    ON DUPLICATE KEY UPDATE contentImportDate = now()
-                """
-    # sql 실행(전송)
-    cursor.execute(sql, listData)
-    # cursor 닫기
-    cursor.close()
-    # 연결 닫기
-conn.close()  # DB 연결 종료
+try:
+    elem_pw = driver.find_element_by_class_name('jw-title-clip-poster-play-button')
+    elem_pw.click()  # 클릭명령
+except Exception as e:
+    print(e)
 
+time.sleep(3)
+htmlContent = driver.page_source
+# print(html)
+soup = BeautifulSoup(htmlContent, 'html.parser')
+contentSave = soup.select('div.jw-info-box')  # 크롤링할 위치 정함
 
+try:
+    for content in contentSave:
+        contentTitle = content.select_one('div.title-block h1')  # 제목 저장
+        contentTitleReplace = contentTitle.text.strip()
+        try:
+            contentYoutube = soup.select_one('#youtube-player-1').attrs['src']  # 유튜브 영상 링크
+            print(contentYoutube)
+        except Exception as e:
+            contentYoutube = '유튜브 영상 링크 없음'
+            print('{} 영상은 링크가 없음 error : {}'.format(contentTitleReplace, e))
+        contentYear = content.select_one('div.title-block span.text-muted')
+        contentYearReplace = contentYear.text.replace("(", "").replace(")", "").replace(" ", "")
+        contentInfo = content.select_one('p.text-wrap-pre-line')
+        contentAge = content.select_one('.title-info>div:nth-child(5)>div:nth-child(2)')
+        contentReleaseDate = content.select_one('.title-info>div:nth-child(4)>div:nth-child(2)')
+        contentGenre = content.select_one('.title-info>div:nth-child(3)>div:nth-child(2)')
+        contentGenreReplace = contentGenre.text.replace(" ", "")
+        contentOTTList = []
+        for contentOTT in soup.select(
+                'div.price-comparison__grid__row--stream .price-comparison__grid__row__holder img'):
+            ct = contentOTT['alt']
+            contentOTTList.append(ct)
+        contentSaveList.append([contentTitleReplace, contentYoutube])
+except Exception as e:
+    print(e)
+
+print(contentSaveList)

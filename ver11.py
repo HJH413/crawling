@@ -46,8 +46,11 @@ for URL in contentURL:
     # 페이지 접근
     driver.get(URL)
 
-    elem_pw = driver.find_element_by_class_name('jw-title-clip-poster-play-button')
-    elem_pw.click()  # 클릭명령
+    try:
+        elem_pw = driver.find_element_by_class_name('jw-title-clip-poster-play-button')
+        elem_pw.click()  # 클릭명령
+    except Exception as e:
+        print(e)
     time.sleep(3)
     html = driver.page_source
     # print(html)
@@ -56,23 +59,28 @@ for URL in contentURL:
 
     try:
         for content in contentSave:
-            contentYoutube = soup.select_one('#youtube-player-1').attrs['src']  # 유튜브 영상 링크
-            print(contentYoutube)
             contentTitle = content.select_one('div.title-block h1')  # 제목 저장
-            print(contentTitle.text)
-            contentYear1 = content.select_one('div.title-block span.text-muted')
-            contentYear2 = contentYear1.text.replace("(", "").replace(")", "").replace(" ", "")
+            contentTitleReplace = contentTitle.text.strip()
+            try:
+                contentYoutube = soup.select_one('#youtube-player-1').attrs['src']  # 유튜브 영상 링크
+            except Exception as e:
+                contentYoutube = '유튜브 영상 링크 없음'
+                print('{} 영상은 링크가 없음 error : {}'.format(contentTitleReplace, e))
+            contentReleaseDate = content.select_one('div.title-block span.text-muted')
+            contentReleaseDateReplace = contentReleaseDate.text.replace("(", "").replace(")", "").replace(" ", "")
             contentInfo = content.select_one('p.text-wrap-pre-line')
             contentAge = content.select_one('.title-info>div:nth-child(5)>div:nth-child(2)')
-            contentTime = content.select_one('.title-info>div:nth-child(4)>div:nth-child(2)')
+            contentRunningTime = content.select_one('.title-info>div:nth-child(4)>div:nth-child(2)')
             contentGenre = content.select_one('.title-info>div:nth-child(3)>div:nth-child(2)')
-            contentIcon = content.select_one('.provider-icon img').attrs['alt']
-            print(contentInfo.text)
-            print(contentAge.text)
-            print(contentGenre.text.replace(" ", ""))
-            print(contentIcon)
-            #contentSaveList.append([contentTitle.text.strip(), contentYear2, contentYoutube, contentInfo.text, contentAge.text, contentTime.text])
+            contentGenreReplace = contentGenre.text.replace(" ", "")
+            contentOTTList = []
+            for contentOTT in soup.select(
+                    'div.price-comparison__grid__row--stream .price-comparison__grid__row__holder img'):
+                ct = contentOTT['alt']
+                contentOTTList.append(ct)
+            print("진행 중 인 영상 {}".format(contentTitleReplace))
+            contentSaveList.append([contentTitleReplace, contentYoutube, contentReleaseDateReplace, contentInfo.text, contentAge.text, contentRunningTime.text, contentGenreReplace, contentOTTList])
     except Exception as e:
         print(e)
 
-#print(contentSaveList)
+print(contentSaveList)
